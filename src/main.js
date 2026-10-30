@@ -399,6 +399,18 @@ function animate(now) {
     }
   }
 
+  // Small readable motion sells the weight of the ride even at low polygon counts.
+  const cruising = started && (Math.abs(moveX) + Math.abs(moveZ) +
+    (keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD || keys.ArrowUp || keys.ArrowDown ? 1 : 0)) > 0.08;
+  const rideSpeed = cruising ? 1 : 0.22;
+  board.rotation.z = THREE.MathUtils.damp(board.rotation.z, cruising ? -moveX * 0.10 : 0, 5, dt);
+  board.position.y = 0.015 + Math.sin(now * 0.006) * (cruising ? 0.018 : 0.008);
+  wheels.forEach((wheel, i) => { wheel.rotation.x += dt * (cruising ? 7.5 : 0.25) * (i % 2 ? -1 : 1); });
+  torso.rotation.z = Math.sin(now * 0.0022) * (cruising ? 0.035 : 0.012);
+  armBalance.rotation.z = Math.sin(now * 0.003) * 0.035;
+  armSmoke.rotation.x = Math.sin(now * 0.0018) * 0.018;
+  player.rotation.z = THREE.MathUtils.damp(player.rotation.z, cruising ? -moveX * 0.045 : 0, 4, dt);
+
   cameraTarget.set(player.position.x, player.position.y + 1.45, player.position.z);
   const distance = 7.8;
   desiredCamera.set(
