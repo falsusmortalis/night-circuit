@@ -115,38 +115,67 @@ for (let z = -95; z < 70; z += 23) {
   scene.add(light);
 }
 
-// A small anime-inspired placeholder avatar. Final character art will replace this rig.
+// Hooded anime-noir skater heroine with a cigarette and skateboard.
 const player = new THREE.Group();
-const skin = mat(0xe2b49b);
-const hair = mat(0x171923);
-const coat = mat(0x252a3d);
-const coatLight = mat(0x3d4059);
-const legsMat = mat(0x171d2b);
-const shoe = mat(0x10131b);
-addCylinder(0.42, 0.34, 0.95, coat, 0, 1.15, 0, player, 12);
-const torso = new THREE.Mesh(new THREE.SphereGeometry(0.48, 14, 12), coat);
-torso.scale.set(0.95, 1.2, 0.72);
-torso.position.y = 1.45;
-player.add(torso);
-const head = new THREE.Mesh(new THREE.SphereGeometry(0.31, 16, 14), skin);
-head.position.y = 2.25;
-player.add(head);
-const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.34, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.62), hair);
-hairCap.position.set(0, 2.34, -0.015);
-player.add(hairCap);
-const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.19, 12, 8), hair);
-fringe.scale.set(1.2, 0.55, 0.8);
-fringe.position.set(0, 2.24, 0.22);
-player.add(fringe);
-for (const x of [-0.2, 0.2]) {
-  addBox(0.22, 0.82, 0.25, legsMat, x, 0.48, 0, player);
-  addBox(0.25, 0.13, 0.42, shoe, x, 0.08, 0.08, player);
-  const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.55, 4, 8), coatLight);
-  arm.position.set(x * 2.7, 1.35, 0.02);
-  arm.rotation.z = x < 0 ? -0.12 : 0.12;
-  player.add(arm);
+const skin = mat(0xe2b49b), hair = mat(0x11131c), hoodie = mat(0x171c2a);
+const hoodieFold = mat(0x30364a), trousers = mat(0x111722), shoe = mat(0x090d15);
+const cigaretteMat = mat(0xe7dfd2);
+const emberMat = new THREE.MeshStandardMaterial({color:0xff8b48,emissive:0xff4a16,emissiveIntensity:2.2});
+
+const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.43,0.65,5,12),hoodie);
+torso.position.set(0,1.47,0); torso.rotation.x=-0.12; player.add(torso);
+const fold = new THREE.Mesh(new THREE.SphereGeometry(0.38,12,10),hoodieFold);
+fold.scale.set(1,0.65,0.7); fold.position.set(0,1.42,0.22); player.add(fold);
+const hood = new THREE.Mesh(new THREE.SphereGeometry(0.43,16,12),hoodie);
+hood.scale.set(1.02,1.05,0.82); hood.position.set(0,2.28,-0.13); player.add(hood);
+const face = new THREE.Mesh(new THREE.SphereGeometry(0.285,16,14),skin);
+face.scale.set(0.92,1,0.8); face.position.set(0,2.27,0.12); player.add(face);
+const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.31,16,12,0,Math.PI*2,0,Math.PI*0.62),hair);
+hairCap.position.set(0,2.37,0.04); player.add(hairCap);
+const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.2,12,8),hair);
+fringe.scale.set(1.25,0.5,0.75); fringe.position.set(0,2.24,0.31); player.add(fringe);
+
+// Cigarette at the corner of the mouth, with a small glowing tip.
+const cigarette = new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,0.24,8),cigaretteMat);
+cigarette.rotation.z=Math.PI/2; cigarette.position.set(0.27,2.19,0.36); player.add(cigarette);
+const ember = new THREE.Mesh(new THREE.SphereGeometry(0.035,8,8),emberMat);
+ember.position.set(0.39,2.19,0.36); player.add(ember);
+
+// Bent knees and a low, relaxed cruising stance.
+for (const side of [-1,1]) {
+  const leg = new THREE.Group(); leg.position.set(side*0.22,0.98,0);
+  const thigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.14,0.46,4,8),trousers);
+  thigh.rotation.x=side*0.25; thigh.position.set(0,-0.22,0); leg.add(thigh);
+  addBox(0.3,0.16,0.48,shoe,0,-0.58,side<0?0.1:-0.12,leg);
+  player.add(leg);
 }
-player.position.set(0, 0, 28);
+const arms=[];
+for (const side of [-1,1]) {
+  const arm=new THREE.Group(); arm.position.set(side*0.39,1.68,0);
+  const sleeve=new THREE.Mesh(new THREE.CapsuleGeometry(0.13,0.5,4,8),hoodie);
+  sleeve.rotation.z=side*-0.24; sleeve.rotation.x=-0.12;
+  sleeve.position.set(side*0.06,-0.25,0.03); arm.add(sleeve);
+  const hand=new THREE.Mesh(new THREE.SphereGeometry(0.105,10,8),skin);
+  hand.position.set(side*0.12,-0.55,0.07); arm.add(hand);
+  player.add(arm); arms.push(arm);
+}
+
+// Skateboard deck, trucks and four visible wheels.
+const board=new THREE.Group();
+const deck=new THREE.Mesh(new THREE.BoxGeometry(0.62,0.12,1.82),mat(0x282a3c,0.48,0.25));
+deck.position.y=0.24; board.add(deck);
+const grip=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.018,1.65),mat(0x10131d));
+grip.position.y=0.307; board.add(grip);
+const truckMat=mat(0x9aa5b5,0.32,0.75), wheelMat=mat(0xd4c8bd,0.45,0.08), wheels=[];
+for (const z of [-0.57,0.57]) {
+  addBox(0.12,0.08,0.22,truckMat,0,0.13,z,board);
+  for (const x of [-0.36,0.36]) {
+    const wheel=new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.14,0.11,14),wheelMat);
+    wheel.rotation.z=Math.PI/2; wheel.position.set(x,0.14,z); board.add(wheel); wheels.push(wheel);
+  }
+}
+player.add(board);
+player.position.set(0,0,28);
 scene.add(player);
 
 // Camera follows behind the avatar; drag/touch rotates the view around the character.
@@ -219,7 +248,7 @@ function animate(now) {
       const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
       const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
       const direction = forward.multiplyScalar(forwardInput).add(right.multiplyScalar(sideInput)).normalize();
-      const speed = (keys.ShiftLeft ? 5.0 : 2.6);
+      const speed = (keys.ShiftLeft ? 7.0 : 4.2);
       player.position.addScaledVector(direction, speed * dt);
       player.rotation.y = Math.atan2(direction.x, direction.z);
       player.position.x = THREE.MathUtils.clamp(player.position.x, -17, 36);
