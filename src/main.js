@@ -203,9 +203,99 @@ renderer.domElement.addEventListener('pointermove', e => {
   lastPointerX = e.clientX; lastPointerY = e.clientY;
 });
 
+
+/* Author soundtrack — tracks are loaded from assets/audio. */
+const playlist = [
+  { title: '2 · Безликий', file: '2 безликий.mp3' },
+  { title: '3 · Pure', file: '3 Pure.mp3' },
+  { title: '4 · Медленно', file: '4 медленно.mp3' },
+  { title: '5 · Не верю', file: '5 не верю.mp3' },
+  { title: '6 · Неоном по коже', file: '6 неоном по коже.mp3' },
+  { title: '7 · Память', file: '7 память.mp3' }
+];
+const soundtrack = new Audio();
+soundtrack.preload = 'metadata';
+soundtrack.volume = 0.55;
+let trackIndex = 0;
+const trackName = document.querySelector('#track-name');
+const playButton = document.querySelector('#audio-play');
+const prevButton = document.querySelector('#audio-prev');
+const nextButton = document.querySelector('#audio-next');
+const volumeControl = document.querySelector('#audio-volume');
+const seekControl = document.querySelector('#audio-seek');
+const timeLabel = document.querySelector('#audio-time');
+
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds)) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
+  return `${mins}:${secs}`;
+}
+function loadTrack(index, autoplay = false) {
+  trackIndex = (index + playlist.length) % playlist.length;
+  const track = playlist[trackIndex];
+  soundtrack.src = './assets/audio/' + encodeURIComponent(track.file);
+  trackName.textContent = track.title;
+  seekControl.value = 0;
+  timeLabel.textContent = '0:00 / 0:00';
+  if (autoplay) {
+    soundtrack.play().then(() => {
+      playButton.textContent = 'Ⅱ';
+      playButton.setAttribute('aria-label', 'Пауза');
+    }).catch(() => {
+      playButton.textContent = '▶';
+      playButton.setAttribute('aria-label', 'Воспроизвести');
+      trackName.textContent = track.title + ' · нажми ▶';
+    });
+  } else {
+    playButton.textContent = '▶';
+    playButton.setAttribute('aria-label', 'Воспроизвести');
+  }
+}
+function togglePlayback() {
+  if (!soundtrack.src) loadTrack(trackIndex, false);
+  if (soundtrack.paused) {
+    soundtrack.play().then(() => {
+      playButton.textContent = 'Ⅱ';
+      playButton.setAttribute('aria-label', 'Пауза');
+    }).catch(() => {
+      trackName.textContent = playlist[trackIndex].title + ' · не удалось загрузить';
+    });
+  } else {
+    soundtrack.pause();
+    playButton.textContent = '▶';
+    playButton.setAttribute('aria-label', 'Воспроизвести');
+  }
+}
+prevButton.addEventListener('click', () => loadTrack(trackIndex - 1, true));
+nextButton.addEventListener('click', () => loadTrack(trackIndex + 1, true));
+playButton.addEventListener('click', togglePlayback);
+volumeControl.addEventListener('input', () => { soundtrack.volume = Number(volumeControl.value); });
+seekControl.addEventListener('input', () => {
+  if (Number.isFinite(soundtrack.duration)) {
+    soundtrack.currentTime = Number(seekControl.value) / 1000 * soundtrack.duration;
+  }
+});
+soundtrack.addEventListener('loadedmetadata', () => {
+  timeLabel.textContent = `0:00 / ${formatTime(soundtrack.duration)}`;
+});
+soundtrack.addEventListener('timeupdate', () => {
+  if (Number.isFinite(soundtrack.duration) && soundtrack.duration > 0) {
+    seekControl.value = Math.round(soundtrack.currentTime / soundtrack.duration * 1000);
+    timeLabel.textContent = `${formatTime(soundtrack.currentTime)} / ${formatTime(soundtrack.duration)}`;
+  }
+});
+soundtrack.addEventListener('ended', () => loadTrack(trackIndex + 1, true));
+soundtrack.addEventListener('error', () => {
+  trackName.textContent = playlist[trackIndex].title + ' · ошибка загрузки';
+  playButton.textContent = '▶';
+});
+loadTrack(0, false);
+
 document.querySelector('#enter').addEventListener('click', () => {
   started = true;
   document.querySelector('#intro').classList.add('hidden');
+  togglePlayback();
   document.querySelector('#status').style.opacity = 1;
 });
 
