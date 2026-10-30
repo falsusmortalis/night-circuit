@@ -221,7 +221,7 @@ function animate(now) {
       const direction = forward.multiplyScalar(forwardInput).add(right.multiplyScalar(sideInput)).normalize();
       const speed = (keys.ShiftLeft ? 5.0 : 2.6);
       player.position.addScaledVector(direction, speed * dt);
-      player.rotation.y = Math.atan2(direction.x, direction.z) + Math.PI;
+      player.rotation.y = Math.atan2(direction.x, direction.z);
       player.position.x = THREE.MathUtils.clamp(player.position.x, -17, 36);
       player.position.z = THREE.MathUtils.clamp(player.position.z, -112, 68);
       player.position.y = Math.abs(Math.sin(now * 0.012)) * 0.045;
