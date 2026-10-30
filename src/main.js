@@ -292,9 +292,82 @@ soundtrack.addEventListener('error', () => {
 });
 loadTrack(0, false);
 
+
+/* Original A-Del soundtrack player */
+const playlist = [
+  { title: '2 · Безликий', file: '2 безликий.mp3' },
+  { title: '3 · Pure', file: '3 Pure.mp3' },
+  { title: '4 · Медленно', file: '4 медленно.mp3' },
+  { title: '5 · Не верю', file: '5 не верю.mp3' },
+  { title: '6 · Неоном по коже', file: '6 неоном по коже.mp3' },
+  { title: '7 · Память', file: '7 память.mp3' }
+];
+const soundtrack = new Audio();
+soundtrack.preload = 'metadata';
+soundtrack.volume = 0.55;
+let trackIndex = 0;
+const trackName = document.querySelector('#track-name');
+const playButton = document.querySelector('#audio-play');
+const prevButton = document.querySelector('#audio-prev');
+const nextButton = document.querySelector('#audio-next');
+const volumeControl = document.querySelector('#audio-volume');
+const seekControl = document.querySelector('#audio-seek');
+const timeLabel = document.querySelector('#audio-time');
+
+function audioTime(seconds) {
+  if (!Number.isFinite(seconds)) return '0:00';
+  return Math.floor(seconds / 60) + ':' + String(Math.floor(seconds % 60)).padStart(2, '0');
+}
+function loadTrack(index, autoplay = false) {
+  trackIndex = (index + playlist.length) % playlist.length;
+  const track = playlist[trackIndex];
+  soundtrack.src = './assets/audio/' + encodeURIComponent(track.file);
+  trackName.textContent = track.title;
+  seekControl.value = 0;
+  timeLabel.textContent = '0:00 / 0:00';
+  playButton.textContent = '▶';
+  if (autoplay) startAudio();
+}
+function startAudio() {
+  soundtrack.play().then(() => {
+    playButton.textContent = 'Ⅱ';
+    playButton.setAttribute('aria-label', 'Пауза');
+  }).catch(() => {
+    playButton.textContent = '▶';
+    playButton.setAttribute('aria-label', 'Воспроизвести');
+    trackName.textContent = playlist[trackIndex].title + ' · нажми ▶';
+  });
+}
+function toggleAudio() {
+  if (soundtrack.paused) startAudio();
+  else {
+    soundtrack.pause();
+    playButton.textContent = '▶';
+    playButton.setAttribute('aria-label', 'Воспроизвести');
+  }
+}
+prevButton.addEventListener('click', () => loadTrack(trackIndex - 1, true));
+nextButton.addEventListener('click', () => loadTrack(trackIndex + 1, true));
+playButton.addEventListener('click', toggleAudio);
+volumeControl.addEventListener('input', () => { soundtrack.volume = Number(volumeControl.value); });
+seekControl.addEventListener('input', () => {
+  if (Number.isFinite(soundtrack.duration)) soundtrack.currentTime = Number(seekControl.value) / 1000 * soundtrack.duration;
+});
+soundtrack.addEventListener('loadedmetadata', () => { timeLabel.textContent = '0:00 / ' + audioTime(soundtrack.duration); });
+soundtrack.addEventListener('timeupdate', () => {
+  if (Number.isFinite(soundtrack.duration) && soundtrack.duration > 0) {
+    seekControl.value = Math.round(soundtrack.currentTime / soundtrack.duration * 1000);
+    timeLabel.textContent = audioTime(soundtrack.currentTime) + ' / ' + audioTime(soundtrack.duration);
+  }
+});
+soundtrack.addEventListener('ended', () => loadTrack(trackIndex + 1, true));
+soundtrack.addEventListener('error', () => { trackName.textContent = playlist[trackIndex].title + ' · ошибка загрузки'; });
+loadTrack(0, false);
+
 document.querySelector('#enter').addEventListener('click', () => {
   started = true;
   document.querySelector('#intro').classList.add('hidden');
+  toggleAudio();
   togglePlayback();
   document.querySelector('#status').style.opacity = 1;
 });
