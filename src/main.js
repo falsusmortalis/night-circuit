@@ -44,7 +44,8 @@ const sunset = new THREE.Mesh(
 );
 sunset.position.set(-92, 17, -92);
 scene.add(sunset);
-\nscene.add(new THREE.HemisphereLight(0xa9bce8, 0x211b2b, 1.45));
+
+scene.add(new THREE.HemisphereLight(0xa9bce8, 0x211b2b, 1.45));
 const moon = new THREE.DirectionalLight(0xa8c7ff, 1.8);
 moon.position.set(-35, 55, 20);
 scene.add(moon);
@@ -123,7 +124,8 @@ for (let i = 0; i < 34; i++) {
   patch.position.set(8 + ((i * 17) % 31), 0.035 + (i % 3) * 0.001, -105 + ((i * 23) % 170));
   scene.add(patch);
 }
-\n// Distant dark hills and a restrained historic skyline.
+
+// Distant dark hills and a restrained historic skyline.
 const hillMat = mat(0x202a3b);
 for (let i = 0; i < 9; i++) {
   const hill = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), hillMat);
@@ -480,7 +482,8 @@ function animate(now) {
   );
   camera.position.lerp(desiredCamera, 1 - Math.exp(-5 * dt));
   camera.lookAt(cameraTarget);
-  sea.position.z = -38 + Math.sin(now * 0.00025) * 0.12;\n  seaMaterial.uniforms.uTime.value = now * 0.001;
+  sea.position.z = -38 + Math.sin(now * 0.00025) * 0.12;
+  seaMaterial.uniforms.uTime.value = now * 0.001;
   renderer.render(scene, camera);
 }
 requestAnimationFrame(animate);
