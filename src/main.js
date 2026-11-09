@@ -37,13 +37,7 @@ const sky = new THREE.Mesh(
 sky.renderOrder = -100;
 scene.add(sky);
 
-// Distant sunset disc, deliberately subtle rather than a flat UI-like sun.
-const sunset = new THREE.Mesh(
-  new THREE.SphereGeometry(7.5, 32, 24),
-  new THREE.MeshBasicMaterial({ color: 0xffa0a5, fog: false })
-);
-sunset.position.set(-92, 17, -92);
-scene.add(sunset);
+// The sunset is painted into the procedural sky gradient; no oversized sun disc.
 
 scene.add(new THREE.HemisphereLight(0xa9bce8, 0x211b2b, 1.45));
 const moon = new THREE.DirectionalLight(0xa8c7ff, 1.8);
@@ -110,20 +104,7 @@ for (let z = -110; z < 70; z += 12) {
 }
 
 
-// Wet asphalt: shallow irregular reflective patches catch the neon and street lamps.
-const puddleMaterial = new THREE.MeshPhysicalMaterial({
-  color: 0x293748, roughness: 0.19, metalness: 0.32, clearcoat: 0.85, clearcoatRoughness: 0.12,
-  transparent: true, opacity: 0.48, depthWrite: false
-});
-for (let i = 0; i < 34; i++) {
-  const w = 1.2 + (i % 5) * 0.72;
-  const d = 2.4 + (i % 4) * 1.25;
-  const patch = new THREE.Mesh(new THREE.CircleGeometry(1, 20), puddleMaterial);
-  patch.rotation.x = -Math.PI / 2;
-  patch.scale.set(w, d, 1);
-  patch.position.set(8 + ((i * 17) % 31), 0.035 + (i % 3) * 0.001, -105 + ((i * 23) % 170));
-  scene.add(patch);
-}
+// Reflective road treatment will be added as a continuous material rather than dark puddle decals.
 
 // Distant dark hills and a restrained historic skyline.
 const hillMat = mat(0x202a3b);
