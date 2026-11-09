@@ -3,7 +3,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 const mount = document.querySelector('#scene');
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x101629);
-scene.fog = new THREE.FogExp2(0x101629, 0.012);
+scene.fog = new THREE.FogExp2(0x22243a, 0.0095);
 
 const camera = new THREE.PerspectiveCamera(58, innerWidth / innerHeight, 0.1, 500);
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -14,7 +14,37 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.12;
 mount.appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0x9db9e8, 0x211b2b, 1.7));
+
+const sky = new THREE.Mesh(
+  new THREE.SphereGeometry(390, 32, 20),
+  new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    depthWrite: false,
+    uniforms: { uTop: { value: new THREE.Color(0x111a35) }, uMid: { value: new THREE.Color(0x58345f) }, uHorizon: { value: new THREE.Color(0xe87991) } },
+    vertexShader: `varying vec3 vDirection; void main(){ vDirection = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+    fragmentShader: `uniform vec3 uTop; uniform vec3 uMid; uniform vec3 uHorizon; varying vec3 vDirection;
+      void main(){
+        float h = normalize(vDirection).y;
+        float band = smoothstep(-0.22, 0.20, h);
+        vec3 low = mix(uHorizon, uMid, smoothstep(-0.12, 0.12, h));
+        vec3 col = mix(low, uTop, band);
+        float glow = exp(-pow((h + 0.035) * 8.0, 2.0));
+        col += vec3(0.22,0.055,0.12) * glow;
+        gl_FragColor = vec4(col,1.0);
+      }`
+  })
+);
+sky.renderOrder = -100;
+scene.add(sky);
+
+// Distant sunset disc, deliberately subtle rather than a flat UI-like sun.
+const sunset = new THREE.Mesh(
+  new THREE.SphereGeometry(7.5, 32, 24),
+  new THREE.MeshBasicMaterial({ color: 0xffa0a5, fog: false })
+);
+sunset.position.set(-92, 17, -92);
+scene.add(sunset);
+\nscene.add(new THREE.HemisphereLight(0xa9bce8, 0x211b2b, 1.45));
 const moon = new THREE.DirectionalLight(0xa8c7ff, 1.8);
 moon.position.set(-35, 55, 20);
 scene.add(moon);
@@ -50,9 +80,24 @@ function addCylinder(rt, rb, h, material, x, y, z, parent = scene, sides = 10) {
 
 // Compact coastal promenade: sea on the left, old low-rise street on the right.
 addBox(260, 0.35, 260, mat(0x17212e), 0, -0.45, 0);
-const sea = new THREE.Mesh(new THREE.PlaneGeometry(240, 210), new THREE.MeshStandardMaterial({
-  color: 0x102c43, roughness: 0.22, metalness: 0.42, emissive: 0x061321, emissiveIntensity: 0.35
-}));
+const seaMaterial = new THREE.ShaderMaterial({
+  uniforms: { uTime: { value: 0 } },
+  vertexShader: `varying vec2 vUv; varying vec3 vWorld; void main(){ vUv=uv; vec4 world=modelMatrix*vec4(position,1.0); vWorld=world.xyz; gl_Position=projectionMatrix*viewMatrix*world; }`,
+  fragmentShader: `uniform float uTime; varying vec2 vUv; varying vec3 vWorld;
+    void main(){
+      float wave = sin(vWorld.x*0.16 + uTime*0.7)*0.5 + sin(vWorld.z*0.22-uTime*0.48)*0.5;
+      float fine = sin(vWorld.x*0.72 + vWorld.z*0.31 + uTime*1.4);
+      vec3 deep = vec3(0.018,0.075,0.12);
+      vec3 teal = vec3(0.055,0.20,0.27);
+      vec3 color = mix(deep,teal,0.28 + wave*0.12 + fine*0.025);
+      float horizonGlow = exp(-abs(vWorld.z + 72.0)*0.035) * (0.5 + 0.5*sin(vWorld.x*0.09 + uTime*0.2));
+      color += vec3(0.20,0.055,0.10) * horizonGlow * 0.22;
+      float glint = pow(max(0.0, sin(vWorld.x*0.42 + vWorld.z*0.17 + uTime*1.8)), 18.0);
+      color += vec3(0.20,0.25,0.31) * glint * 0.12;
+      gl_FragColor=vec4(color,1.0);
+    }`
+});
+const sea = new THREE.Mesh(new THREE.PlaneGeometry(240, 210, 1, 1), seaMaterial);
 sea.rotation.x = -Math.PI / 2;
 sea.position.set(-75, -0.18, -38);
 scene.add(sea);
@@ -63,7 +108,22 @@ for (let z = -110; z < 70; z += 12) {
   addBox(0.12, 0.025, 5, mat(0x9a8790), 25, 0.04, z);
 }
 
-// Distant dark hills and a restrained historic skyline.
+
+// Wet asphalt: shallow irregular reflective patches catch the neon and street lamps.
+const puddleMaterial = new THREE.MeshPhysicalMaterial({
+  color: 0x293748, roughness: 0.19, metalness: 0.32, clearcoat: 0.85, clearcoatRoughness: 0.12,
+  transparent: true, opacity: 0.48, depthWrite: false
+});
+for (let i = 0; i < 34; i++) {
+  const w = 1.2 + (i % 5) * 0.72;
+  const d = 2.4 + (i % 4) * 1.25;
+  const patch = new THREE.Mesh(new THREE.CircleGeometry(1, 20), puddleMaterial);
+  patch.rotation.x = -Math.PI / 2;
+  patch.scale.set(w, d, 1);
+  patch.position.set(8 + ((i * 17) % 31), 0.035 + (i % 3) * 0.001, -105 + ((i * 23) % 170));
+  scene.add(patch);
+}
+\n// Distant dark hills and a restrained historic skyline.
 const hillMat = mat(0x202a3b);
 for (let i = 0; i < 9; i++) {
   const hill = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), hillMat);
@@ -420,7 +480,7 @@ function animate(now) {
   );
   camera.position.lerp(desiredCamera, 1 - Math.exp(-5 * dt));
   camera.lookAt(cameraTarget);
-  sea.position.z = -38 + Math.sin(now * 0.00025) * 0.12;
+  sea.position.z = -38 + Math.sin(now * 0.00025) * 0.12;\n  seaMaterial.uniforms.uTime.value = now * 0.001;
   renderer.render(scene, camera);
 }
 requestAnimationFrame(animate);
