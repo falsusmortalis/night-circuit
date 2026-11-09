@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090b14">
+<title>На нычке — тест Maya</title>
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 35%,#34283d,#090d18 72%);color:#f4edf4;font:15px system-ui,sans-serif;min-height:100vh}
+header{padding:22px clamp(18px,4vw,48px);border-bottom:1px solid #49384e;display:flex;justify-content:space-between;align-items:center;gap:15px}
+.brand{font-size:15px;letter-spacing:.18em;font-weight:800}.sub{color:#bcaebe;font-size:11px;letter-spacing:.14em}
+main{max-width:1180px;margin:28px auto;padding:0 18px}.intro{margin:0 0 18px}.intro h1{font-size:clamp(25px,4vw,38px);margin:0 0 6px}.intro p{color:#c2b4c7;margin:0}
+.panel{border:1px solid #55425b;border-radius:18px;overflow:hidden;background:#111321;box-shadow:0 20px 80px #0008}
+model-viewer{width:100%;height:min(72vh,760px);min-height:440px;background:radial-gradient(ellipse at 50% 38%,#49364b,#151a29 72%);--poster-color:transparent}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:16px}
+button,.pick{background:#d69b65;color:#1b1219;border:0;border-radius:8px;padding:11px 15px;font-weight:750;cursor:pointer}
+button.alt{background:#30283b;color:#eee;border:1px solid #65516c}input{display:none}
+.note{padding:0 17px 17px;color:#bcb2c2;font-size:13px;line-height:1.5}
+#status{margin-left:auto;color:#d8c5db;font-size:12px}
+</style></head>
+<body>
+<header><div class="brand">НА НЫЧКЕ <span class="sub">/ 2049</span></div><div class="sub">CHARACTER LAB · MAYA</div></header>
+<main><section class="intro"><h1>Тест персонажа Maya</h1><p>Пока это отдельная лаборатория — основная игра и прежняя героиня не затрагиваются.</p></section>
+<div class="panel">
+<model-viewer id="viewer" camera-controls auto-rotate rotation-per-second="18deg" shadow-intensity="1" exposure="1.15" environment-image="neutral" camera-orbit="0deg 75deg 2.5m" min-camera-orbit="auto auto 0.7m" max-camera-orbit="auto auto 6m" interaction-prompt="none"></model-viewer>
+<div class="controls"><label class="pick" for="model-file">Загрузить Maya GLB</label><input id="model-file" type="file" accept=".glb,.gltf">
+<button class="alt" id="front">Спереди</button><button class="alt" id="side">Сбоку</button><button class="alt" id="back">Сзади</button><span id="status">Ожидаю файл модели</span></div>
+<div class="note">Выбери скачанный файл anime_charactermaya_freeunity_3d.glb. Модель откроется прямо в браузере и останется на твоём устройстве. Вращай мышью, приближай колёсиком. Для возврата в игру просто закрой эту вкладку.</div>
+</div></main>
+<script>
+const v=document.querySelector('#viewer'), status=document.querySelector('#status');let currentUrl=null;
+document.querySelector('#model-file').addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;if(currentUrl)URL.revokeObjectURL(currentUrl);currentUrl=URL.createObjectURL(f);v.src=currentUrl;status.textContent=f.name+' · '+(f.size/1048576).toFixed(2)+' MB';});
+document.querySelector('#front').onclick=()=>v.cameraOrbit='0deg 75deg 2.5m';
+document.querySelector('#side').onclick=()=>v.cameraOrbit='90deg 75deg 2.5m';
+document.querySelector('#back').onclick=()=>v.cameraOrbit='180deg 75deg 2.5m';
+</script></body></html>
